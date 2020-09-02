@@ -87,6 +87,11 @@ int main(void)
 
         dotlog = fopen("after_delete.dot", "w");
         bt_delete_by_val(&root, 719);
+        bt_delete_by_val(&root, 424);
+        bt_delete_by_val(&root, 1681);
+        bt_delete_by_val(&root, 2044);
+        bt_insert(&root, 13013);
+        bt_insert(&root, 500);
         bt_dot_print(root, dotlog);
 
         fclose(dotlog);
