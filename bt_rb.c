@@ -300,26 +300,28 @@ void bt_delete(bt_node **root, bt_node *v)
                 if (v == *root) {
                         // v is root, making root null
                         *root = NULL;
+                        free(v);
+                        return;
+                }
+                if (uvBlack) {
+                        /* u and v both black
+                         * v is leaf, fix double black at v */
+                        bt_fix_double_black(root, v);
                 } else {
-                        if (uvBlack) {
-                                /* u and v both black
-                                 * v is leaf, fix double black at v */
-                                bt_fix_double_black(root, v);
-                        } else {
-                                /* u or v is red */
-                                if (bt_sibling(v)) {
-                                        bt_sibling(v)->color = RED;
-                                }
-                        }
-
-                        // delete v from the tree
-                        if (bt_is_left_child(v))
-                        {
-                                parent->left = NULL;
-                        } else {
-                                parent->right = NULL;
+                        /* u or v is red */
+                        if (bt_sibling(v)) {
+                                bt_sibling(v)->color = RED;
                         }
                 }
+
+                // delete v from the tree
+                if (bt_is_left_child(v))
+                {
+                        parent->left = NULL;
+                } else {
+                        parent->right = NULL;
+                }
+
                 free(v);
                 return;
         }
@@ -332,23 +334,23 @@ void bt_delete(bt_node **root, bt_node *v)
                         v->val = u->val;
                         v->left = v->right = NULL;
                         free(u);
-                } else {
-                        // Detach v from tree and move u up
-                        if (bt_is_left_child(v)) {
-                                parent->left = u;
-                        } else {
-                                parent->right = u;
-                        }
-                        free(v);
-                        u->parent = parent;
-                        if (uvBlack) {
-                                /* u and v both black, fix double black at u */
-                                bt_fix_double_black(root, u);
-                        } else {
-                                /* u or v red, color u black */
-                                u->color = BLACK;
-                        }
+                        return;
                 }
+                // Detach v from tree and move u up
+                if (bt_is_left_child(v)) {
+                        parent->left = u;
+                } else {
+                        parent->right = u;
+                }
+                free(v);
+                u->parent = parent;
+                if (uvBlack) {
+                        /* u and v both black, fix double black at u */
+                        bt_fix_double_black(root, u);
+                        return;
+                }
+                /* u or v red, color u black */
+                u->color = BLACK;
                 return;
         }
 
