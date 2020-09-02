@@ -40,9 +40,9 @@ static bt_node *bt_uncle(bt_node *n)
          * then the uncle is the right child of its parent */
         if (bt_is_left_child(n->parent)) {
                 return n->parent->parent->right;
-        } else {
-                return n->parent->parent->left;
         }
+
+        return n->parent->parent->left;
 }
 
 
@@ -152,36 +152,33 @@ static void bt_fix_red_red(bt_node **root, bt_node *x)
 
         if (parent->color != BLACK) {
                 if (uncle && uncle->color == RED) {
-                        // uncle red, perform recoloring and recurse
                         parent->color = BLACK;
                         uncle->color = BLACK;
                         grandparent->color = RED;
                         bt_fix_red_red(root, grandparent);
-                } else {
-                        // Else perform LR, LL, RL, RR
-                        if (bt_is_left_child(parent)) {
-                                if (bt_is_left_child(x)) {
-                                        // for left right
-                                        bt_color_swap(parent, grandparent);
-                                } else {
-                                        bt_rotate_left(root, parent);
-                                        bt_color_swap(x, grandparent);
-                                }
-                                // for left left and left right
-                                bt_rotate_right(root, grandparent);
-                        } else {
-                                if (bt_is_left_child(x)) {
-                                        // for right left
-                                        bt_rotate_right(root, parent);
-                                        bt_color_swap(x, grandparent);
-                                } else {
-                                        bt_color_swap(parent, grandparent);
-                                }
-
-                                // for right right and right left
-                                bt_rotate_left(root, grandparent);
-                        }
+                        return;
                 }
+
+                if (bt_is_left_child(parent)) {
+                        if (bt_is_left_child(x)) {
+                                bt_color_swap(parent, grandparent);
+                        } else {
+                                bt_rotate_left(root, parent);
+                                bt_color_swap(x, grandparent);
+                        }
+                        bt_rotate_right(root, grandparent);
+                        return;
+                }
+
+                if (bt_is_left_child(x)) {
+                        // for right left
+                        bt_rotate_right(root, parent);
+                        bt_color_swap(x, grandparent);
+                } else {
+                        bt_color_swap(parent, grandparent);
+                }
+
+                bt_rotate_left(root, grandparent);
         }
 }
 
@@ -216,9 +213,9 @@ static bt_node *bt_replace(bt_node *x)
         // if single child
         if (x->left != NULL) {
                 return x->left;
-        } else {
-                return x->right;
         }
+
+        return x->right;
 }
 
 
@@ -235,58 +232,59 @@ static void bt_fix_double_black(bt_node **root, bt_node *x)
         if (sibling == NULL) {
                 // No sibiling, double black pushed up
                 bt_fix_double_black(root, parent);
-        } else {
-                if (sibling->color == RED) {
-                        // Sibling red
-                        parent->color = RED;
-                        sibling->color = BLACK;
+                return;
+        }
+        if (sibling->color == RED) {
+                // Sibling red
+                parent->color = RED;
+                sibling->color = BLACK;
+                if (bt_is_left_child(sibling)) {
+                        bt_rotate_right(root, parent);
+                } else {
+                        bt_rotate_left(root, parent);
+                }
+                bt_fix_double_black(root, x);
+                return;
+        }
+        if (bt_has_red_child(sibling)) {
+                // at least 1 red children
+                if (sibling->left && (sibling->left->color == RED)) {
                         if (bt_is_left_child(sibling)) {
+                                // left left
+                                sibling->left->color = sibling->color;
+                                sibling->color = parent->color;
                                 bt_rotate_right(root, parent);
                         } else {
+                                // right left
+                                sibling->left->color = parent->color;
+                                bt_rotate_right(root, sibling);
                                 bt_rotate_left(root, parent);
                         }
-                        bt_fix_double_black(root, x);
                 } else {
-                        if (bt_has_red_child(sibling)) {
-                                // at least 1 red children
-                                if (sibling->left && (sibling->left->color == RED)) {
-                                        if (bt_is_left_child(sibling)) {
-                                                // left left
-                                                sibling->left->color = sibling->color;
-                                                sibling->color = parent->color;
-                                                bt_rotate_right(root, parent);
-                                        } else {
-                                                // right left
-                                                sibling->left->color = parent->color;
-                                                bt_rotate_right(root, sibling);
-                                                bt_rotate_left(root, parent);
-                                        }
-                                } else {
-                                        if (bt_is_left_child(sibling)) {
-                                                // left right
-                                                sibling->right->color = parent->color;
-                                                bt_rotate_left(root, sibling);
-                                                bt_rotate_right(root, parent);
-                                        } else {
-                                                // right right
-                                                sibling->right->color = sibling->color;
-                                                sibling->color = parent->color;
-                                                bt_rotate_left(root, parent);
-                                        }
-                                }
-                                parent->color = BLACK;
+                        if (bt_is_left_child(sibling)) {
+                                // left right
+                                sibling->right->color = parent->color;
+                                bt_rotate_left(root, sibling);
+                                bt_rotate_right(root, parent);
                         } else {
-                                // 2 black children
-                                sibling->color = RED;
-                                if (parent->color == BLACK) {
-                                        bt_fix_double_black(root, parent);
-                                } else {
-                                        parent->color = BLACK;
-                                }
+                                // right right
+                                sibling->right->color = sibling->color;
+                                sibling->color = parent->color;
+                                bt_rotate_left(root, parent);
                         }
                 }
+                parent->color = BLACK;
+                return;
+        }
+        // 2 black children
+
+        sibling->color = RED;
+        if (parent->color == BLACK) {
+                bt_fix_double_black(root, parent);
+                return;
         }
 
+        parent->color = BLACK;
 }
 
 
